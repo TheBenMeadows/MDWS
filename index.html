@@ -1,0 +1,78 @@
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDWS</title>
+    <style>
+        /* Basic reset and page setup */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #111111; /* Dark background from the website */
+            font-family: sans-serif;
+        }
+
+        /* Flexbox container to center the logo */
+        body {
+            display: flex;
+            justify-content: center; /* Horizontally center */
+            align-items: center;    /* Vertically center */
+        }
+
+        /* Style for the logo */
+        .logo {
+            width: 200px; /* Set a fixed size for the logo */
+            height: auto; /* Maintain aspect ratio */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 
+      This is the SVG logo embedded directly into the HTML.
+      The `viewBox` attribute allows it to scale correctly.
+      The size is controlled by the `.logo` class in the CSS above.
+    -->
+    <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- Background and Border -->
+        <rect 
+            x="5" 
+            y="5" 
+            width="90" 
+            height="90" 
+            rx="10" 
+            ry="10"
+            fill="#111111" 
+            stroke="#FFFFFF" 
+            stroke-width="5" 
+        />
+
+        <!-- Top Text: MD -->
+        <text 
+            x="50" 
+            y="42" 
+            font-size="30" 
+            font-weight="bold" 
+            fill="#FFFFFF" 
+            text-anchor="middle"
+        >
+            MD
+        </text>
+
+        <!-- Bottom Text: WS -->
+        <text 
+            x="50" 
+            y="77" 
+            font-size="30" 
+            font-weight="bold" 
+            fill="#FFFFFF" 
+            text-anchor="middle"
+        >
+            WS
+        </text>
+    </svg>
+
+</body>
+</html>
