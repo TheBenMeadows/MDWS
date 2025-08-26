@@ -27,12 +27,27 @@
             display: flex;
             justify-content: center; /* Horizontally center */
             align-items: center;    /* Vertically center */
+            position: relative; /* Needed for positioning the image */
         }
 
         /* Style for the logo */
         .logo {
             width: 200px; /* Set a fixed size for the logo */
             height: auto; /* Maintain aspect ratio */
+        }
+
+        /* Style for the 'whoami' image */
+        #whoamiImage {
+            display: none; /* Hidden by default */
+            position: absolute; /* Position over the main content */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* Center the image */
+            max-width: 90%;
+            max-height: 90%;
+            background-color: #111111; /* Match background */
+            padding: 20px;
+            border: 2px solid #FFFFFF;
         }
 
         /* Terminal container at the bottom */
@@ -153,6 +168,9 @@
                 WS
             </text>
         </svg>
+
+        <!-- Image to show for 'whoami' or 'id' command -->
+        <img id="whoamiImage" src="/me.png" alt="whoami image">
     </div>
 
     <div class="terminal">
@@ -172,6 +190,7 @@
         const commandInput = document.getElementById('commandInput');
         const helpOutput = document.getElementById('helpOutput');
         const errorOutput = document.getElementById('errorOutput');
+        const whoamiImage = document.getElementById('whoamiImage');
         const helpLinks = helpOutput.querySelectorAll('a');
         let selectedLinkIndex = -1;
 
@@ -210,6 +229,7 @@
                 event.preventDefault();
                 helpOutput.style.display = 'none';
                 errorOutput.style.display = 'none';
+                whoamiImage.style.display = 'none';
                 selectedLinkIndex = -1;
                 updateLinkSelection();
                 return;
@@ -240,18 +260,26 @@
                 // Otherwise, process the command
                 const command = commandInput.value.trim().toLowerCase();
                 const validHelpCommands = ['help', '-h', '--help'];
+                const validIdCommands = ['whoami', 'id'];
 
                 if (validHelpCommands.includes(command)) {
                     helpOutput.style.display = 'block';
                     errorOutput.style.display = 'none';
+                    whoamiImage.style.display = 'none';
                     selectedLinkIndex = -1; // Reset selection
                     updateLinkSelection();
+                } else if (validIdCommands.includes(command)) {
+                    helpOutput.style.display = 'none';
+                    errorOutput.style.display = 'none';
+                    whoamiImage.style.display = 'block';
                 } else if (command !== '') {
                     helpOutput.style.display = 'none';
                     errorOutput.style.display = 'block';
+                    whoamiImage.style.display = 'none';
                 } else {
                     helpOutput.style.display = 'none';
                     errorOutput.style.display = 'none';
+                    whoamiImage.style.display = 'none';
                 }
 
                 commandInput.value = '';
