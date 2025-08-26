@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDWS</title>
+    <style>
+        /* Basic reset and page setup */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #111111; /* Dark background from the website */
+            color: #FFFFFF;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Flexbox container to position content */
+        body {
+            display: flex;
+            flex-direction: column; /* Stack items vertically */
+        }
+
+        /* Main content area to hold and center the logo */
+        .main-content {
+            flex-grow: 1; /* Takes up available space, pushing terminal down */
+            display: flex;
+            justify-content: center; /* Horizontally center */
+            align-items: center;    /* Vertically center */
+        }
+
+        /* Style for the logo */
+        .logo {
+            width: 200px; /* Set a fixed size for the logo */
+            height: auto; /* Maintain aspect ratio */
+        }
+
+        /* Terminal container at the bottom */
+        .terminal {
+            padding: 20px;
+            font-size: 16px;
+        }
+
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+        }
+
+        .prompt {
+            margin-right: 8px;
+        }
+
+        #commandInput {
+            background-color: transparent;
+            border: none;
+            color: #FFFFFF;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            outline: none;
+            flex-grow: 1;
+            /* The cursor is a blinking border */
+            border-right: 2px solid white;
+            padding-right: 2px;
+            animation: blink 1s step-end infinite;
+        }
+
+        /* Hide the animated border when the input is focused */
+        #commandInput:focus {
+            animation: none;
+            border-right-color: transparent;
+        }
+
+        /* Blinking cursor animation */
+        @keyframes blink {
+            50% {
+                border-color: transparent;
+            }
+        }
+
+        #helpOutput {
+            margin-top: 15px;
+            padding-left: 24px; /* Align with input text */
+            display: none; /* Hidden by default */
+        }
+
+        #helpOutput a {
+            color: #FFFFFF;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 8px;
+            padding: 2px 5px; /* Add some padding for the selection highlight */
+        }
+        #helpOutput a:hover, #helpOutput a.selected {
+            background-color: #FFFFFF;
+            color: #111111;
+            outline: none;
+        }
+
+        #errorOutput {
+            margin-top: 15px;
+            padding-left: 24px; /* Align with input text */
+            display: none; /* Hidden by default */
+            color: #cc7a7a; /* A subtle error color */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="main-content">
+        <!-- 
+          This is the SVG logo embedded directly into the HTML.
+          The `viewBox` attribute allows it to scale correctly.
+          The size is controlled by the `.logo` class in the CSS above.
+        -->
+        <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background and Border -->
+            <rect 
+                x="5" 
+                y="5" 
+                width="90" 
+                height="90" 
+                rx="10" 
+                ry="10"
+                fill="#111111" 
+                stroke="#FFFFFF" 
+                stroke-width="5" 
+            />
+
+            <!-- Top Text: MD -->
+            <text 
+                x="50" 
+                y="42" 
+                font-size="30" 
+                font-weight="bold" 
+                fill="#FFFFFF" 
+                text-anchor="middle"
+                font-family="sans-serif"
+            >
+                MD
+            </text>
+
+            <!-- Bottom Text: WS -->
+            <text 
+                x="50" 
+                y="77" 
+                font-size="30" 
+                font-weight="bold" 
+                fill="#FFFFFF" 
+                text-anchor="middle"
+                font-family="sans-serif"
+            >
+                WS
+            </text>
+        </svg>
+    </div>
+
+    <div class="terminal">
+        <div class="terminal-input-line">
+            <span class="prompt">&gt;</span>
+            <input type="text" id="commandInput" autocomplete="off" autofocus>
+        </div>
+        <div id="helpOutput">
+            <a href="https://mail.mdws.me" target="_blank">https://mail.mdws.me</a>
+            <a href="https://links.mdws.me" target="_blank">https://links.mdws.me</a>
+            <a href="https://home.mdws.me" target="_blank">https://home.mdws.me</a>
+        </div>
+        <div id="errorOutput">try asking for help</div>
+    </div>
+
+    <script>
+        const commandInput = document.getElementById('commandInput');
+        const helpOutput = document.getElementById('helpOutput');
+        const errorOutput = document.getElementById('errorOutput');
+        const helpLinks = helpOutput.querySelectorAll('a');
+        let selectedLinkIndex = -1;
+
+        // Focus the input when the user clicks anywhere on the page
+        document.body.addEventListener('click', (event) => {
+            if (event.target.tagName !== 'A') {
+                commandInput.focus();
+            }
+        });
+
+        // Function to update the visual selection of links
+        function updateLinkSelection() {
+            helpLinks.forEach((link, index) => {
+                if (index === selectedLinkIndex) {
+                    link.classList.add('selected');
+                } else {
+                    link.classList.remove('selected');
+                }
+            });
+        }
+
+        // Deselect link when mouse moves back to the input field
+        commandInput.addEventListener('mouseenter', () => {
+            if (selectedLinkIndex !== -1) {
+                selectedLinkIndex = -1;
+                updateLinkSelection();
+            }
+        });
+
+        // Listen for all key presses
+        commandInput.addEventListener('keydown', function(event) {
+            const isHelpVisible = helpOutput.style.display === 'block';
+
+            // Handle Escape key to exit link selection/help view
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                helpOutput.style.display = 'none';
+                errorOutput.style.display = 'none';
+                selectedLinkIndex = -1;
+                updateLinkSelection();
+                return;
+            }
+
+            // Handle arrow navigation if help is visible
+            if (isHelpVisible && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+                event.preventDefault(); // Stop cursor from moving in input
+                if (event.key === 'ArrowDown') {
+                    selectedLinkIndex = (selectedLinkIndex + 1) % helpLinks.length;
+                } else if (event.key === 'ArrowUp') {
+                    selectedLinkIndex = (selectedLinkIndex - 1 + helpLinks.length) % helpLinks.length;
+                }
+                updateLinkSelection();
+                return; // Stop further processing
+            }
+
+            // Handle 'Enter' key
+            if (event.key === 'Enter') {
+                event.preventDefault();
+
+                // If help is visible and a link is selected, open it
+                if (isHelpVisible && selectedLinkIndex > -1) {
+                    helpLinks[selectedLinkIndex].click(); // Simulate a click to open link
+                    return;
+                }
+
+                // Otherwise, process the command
+                const command = commandInput.value.trim().toLowerCase();
+                const validHelpCommands = ['help', '-h', '--help'];
+
+                if (validHelpCommands.includes(command)) {
+                    helpOutput.style.display = 'block';
+                    errorOutput.style.display = 'none';
+                    selectedLinkIndex = -1; // Reset selection
+                    updateLinkSelection();
+                } else if (command !== '') {
+                    helpOutput.style.display = 'none';
+                    errorOutput.style.display = 'block';
+                } else {
+                    helpOutput.style.display = 'none';
+                    errorOutput.style.display = 'none';
+                }
+
+                commandInput.value = '';
+            }
+        });
+    </script>
+
+</body>
+</html>
