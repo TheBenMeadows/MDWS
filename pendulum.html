@@ -68,12 +68,12 @@
 <body class="bg-black text-gray-300 h-screen w-screen flex flex-col md:flex-row overflow-hidden">
 
     <!-- Left/Top: Canvas Area -->
-    <div class="relative flex-grow h-1/2 md:h-full w-full bg-[#050505] flex items-center justify-center overflow-hidden" id="canvas-container">
+    <div class="relative flex-grow h-1/2 md:h-full w-full flex items-center justify-center overflow-hidden" id="canvas-container" style="background-color: #050505;">
         <canvas id="simCanvas"></canvas>
         
         <!-- Overlay Info -->
         <div class="absolute top-6 left-6 pointer-events-none opacity-70 text-xs md:text-sm">
-            <h1 class="text-white font-bold tracking-widest mb-1">THEBENMEADOWS PENDULUM SIMULATOR</h1>
+            <h1 id="title-text" class="text-white font-bold tracking-widest mb-1">THEBENMEADOWS PENDULUM SIMULATOR</h1>
             <div id="status" class="text-green-500">ACTIVE</div>
         </div>
     </div>
@@ -104,7 +104,6 @@
                     </div>
                     <span id="val-ratio" class="text-white">1.500</span>
                 </div>
-                <!-- INCREASED MAX TO 10.0 -->
                 <input type="range" id="ratio" min="1.0" max="10.0" step="0.01" value="1.5">
                 
                 <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider mt-2">
@@ -117,7 +116,6 @@
                     </div>
                     <span id="val-offset" class="text-white">0.005</span>
                 </div>
-                <!-- INCREASED MAX TO 0.20 -->
                 <input type="range" id="offset" min="0.000" max="0.200" step="0.001" value="0.005">
                 
                 <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider mt-2">
@@ -131,8 +129,6 @@
                     <span id="val-phase" class="text-white">90°</span>
                 </div>
                 <input type="range" id="phase" min="0" max="360" step="1" value="90">
-                
-                <p class="text-[10px] text-gray-600 mt-1">Ratio sets shape. Offset rotates it. Phase opens loops.</p>
             </div>
 
             <!-- Amplitude Controls -->
@@ -147,7 +143,6 @@
                     </div>
                     <span id="val-amp-x" class="text-white">1.00</span>
                 </div>
-                <!-- INCREASED MAX TO 2.0 -->
                 <input type="range" id="amp-x" min="0.1" max="2.0" step="0.01" value="1.00">
 
                 <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider">
@@ -175,7 +170,6 @@
                     </div>
                     <span id="val-damping-x" class="text-white">0.005</span>
                 </div>
-                <!-- INCREASED MAX TO 0.1 -->
                 <input type="range" id="damping-x" min="0" max="0.1" step="0.0001" value="0.005">
 
                 <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider mt-2">
@@ -232,13 +226,28 @@
                 </select>
             </div>
             
-            <!-- View Controls -->
+            <!-- View & Style Controls -->
              <div class="space-y-3 pt-4 border-t border-[#222]">
                 <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider">
                     <span>Global Zoom</span>
                     <span id="val-zoom" class="text-white">1.0x</span>
                 </div>
                 <input type="range" id="zoom" min="0.1" max="3.0" step="0.1" value="1.0">
+
+                <!-- Color Theme Lock -->
+                 <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider mt-4">
+                    <div class="flex items-center gap-2">
+                        <span>Color Theme</span>
+                        <button id="lock-color" class="lock-btn text-gray-600 hover:text-white" onclick="toggleLock('color')">
+                            <svg class="icon-unlocked block" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                            <svg class="icon-locked hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <div id="color-preview-bg" class="w-6 h-6 rounded border border-gray-600" style="background-color: #050505;"></div>
+                    <div id="color-preview-line" class="w-6 h-6 rounded border border-gray-600" style="background-color: rgba(255,255,255,0.6);"></div>
+                </div>
             </div>
         </div>
 
@@ -248,13 +257,16 @@
                 Generate System
             </button>
             <div class="flex gap-2 mt-3">
-                <button onclick="resetToDefault()" class="w-1/2 border border-[#333] text-gray-400 py-2 text-xs font-bold tracking-widest hover:text-white hover:border-white transition-colors uppercase">
-                    Reset
+                <button id="btn-save-png" class="w-1/2 border border-[#333] text-gray-400 py-2 text-xs font-bold tracking-widest hover:text-white hover:border-white transition-colors uppercase">
+                    Save PNG
                 </button>
-                <button id="btn-download" class="w-1/2 border border-[#333] text-gray-400 py-2 text-xs font-bold tracking-widest hover:text-white hover:border-white transition-colors uppercase">
-                    Save Img
+                <button id="btn-save-svg" class="w-1/2 border border-[#333] text-gray-400 py-2 text-xs font-bold tracking-widest hover:text-white hover:border-white transition-colors uppercase">
+                    Save SVG
                 </button>
             </div>
+             <button onclick="resetToDefault()" class="w-full mt-2 border border-[#333] text-gray-500 py-2 text-[10px] font-bold tracking-widest hover:text-white hover:border-white transition-colors uppercase">
+                Reset All
+            </button>
         </div>
 
     </div>
@@ -284,9 +296,23 @@
             dampingY: false,
             cycles: false,
             swingTime: true,
-            lineType: false
+            lineType: false,
+            color: false
         };
         
+        // Conservative Color Themes (Background, Line)
+        const themes = [
+            { bg: "#050505", line: "rgba(255, 255, 255, 0.6)" }, // Default Void
+            { bg: "#0f172a", line: "rgba(203, 213, 225, 0.6)" }, // Slate/Ice
+            { bg: "#1a1a1a", line: "rgba(251, 191, 36, 0.6)" },  // Gold/Dark
+            { bg: "#2b1b17", line: "rgba(253, 186, 116, 0.6)" }, // Coffee/Amber
+            { bg: "#002b36", line: "rgba(133, 153, 0, 0.6)" },   // Solarized Dark/Green
+            { bg: "#f0f9ff", line: "rgba(12, 74, 110, 0.6)" },   // Paper/Ink (Light)
+            { bg: "#fafafa", line: "rgba(23, 23, 23, 0.6)" },    // Gallery (Light)
+            { bg: "#18181b", line: "rgba(167, 139, 250, 0.6)" }, // Midnight/Purple
+            { bg: "#020617", line: "rgba(56, 189, 248, 0.6)" }   // Deep Space/Cyan
+        ];
+
         // Configuration Object
         const config = {
             basePeriod: 2.0, // Fixed base
@@ -306,7 +332,11 @@
             
             scale: 150,
             zoom: 1.0,
-            lineType: 'solid'
+            lineType: 'solid',
+            
+            // Colors
+            bgColor: "#050505",
+            lineColor: "rgba(255, 255, 255, 0.6)"
         };
 
         // UI Elements Cache
@@ -334,6 +364,10 @@
             lblCycles: document.getElementById('val-cycles'),
             lblSwingTime: document.getElementById('val-swing-time'),
             lblZoom: document.getElementById('val-zoom'),
+            // Colors
+            previewBg: document.getElementById('color-preview-bg'),
+            previewLine: document.getElementById('color-preview-line'),
+            titleText: document.getElementById('title-text')
         };
         
         function toggleLock(paramKey) {
@@ -398,7 +432,7 @@
         function drawStep() {
             if (!isSimulating) return;
 
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.6)"; 
+            ctx.strokeStyle = config.lineColor; 
             ctx.lineWidth = 0.8;
 
             if (config.lineType === 'dashed') {
@@ -450,6 +484,22 @@
             isSimulating = true;
             time = 0;
             
+            // Update Background
+            container.style.backgroundColor = config.bgColor;
+            ui.previewBg.style.backgroundColor = config.bgColor;
+            ui.previewLine.style.backgroundColor = config.lineColor;
+            
+            // Update Text Contrast
+            // Simple heuristic: if bg is hex white-ish, make text black
+            const isLight = config.bgColor === "#f0f9ff" || config.bgColor === "#fafafa";
+            if(isLight) {
+                 ui.titleText.classList.remove('text-white');
+                 ui.titleText.classList.add('text-black');
+            } else {
+                 ui.titleText.classList.remove('text-black');
+                 ui.titleText.classList.add('text-white');
+            }
+
             const dpr = window.devicePixelRatio || 1;
             ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
             
@@ -502,12 +552,16 @@
             ui.lineType.value = 'solid';
             ui.zoom.value = 1.0;
             
+            // Reset to default Theme
+            config.bgColor = themes[0].bg;
+            config.lineColor = themes[0].line;
+            
             updateConfigFromUI();
             startSimulation();
         }
 
         function randomizeParams() {
-            // 1. Pick a harmonic ratio - EXPANDED LIST
+            // 1. Pick a harmonic ratio
             if (!locks.ratio) {
                 const ratios = [
                     1.0, 1.5, 1.333, 2.0, 0.666, 0.75, 1.25, 2.5, 3.0, 
@@ -518,18 +572,18 @@
                 ui.ratio.value = randomRatio;
             }
 
-            // 2. Random small offset - AESTHETIC RANGE (0 to 0.02)
+            // 2. Random small offset 
             if (!locks.offset) {
                 ui.offset.value = Math.random() * 0.02;
             }
 
-            // 3. Random Phase (0 to 360)
+            // 3. Random Phase 
             if (!locks.phase) {
                 const randomPhase = Math.floor(Math.random() * 360);
                 ui.phase.value = randomPhase;
             }
 
-            // 4. Random Amplitudes - AESTHETIC RANGE (0.8 to 1.4)
+            // 4. Random Amplitudes 
             if (!locks.ampX) {
                 ui.ampX.value = 0.8 + Math.random() * 0.6;
             }
@@ -537,7 +591,7 @@
                 ui.ampY.value = 0.8 + Math.random() * 0.6;
             }
 
-            // 5. Random Damping - AESTHETIC RANGE (0.002 to 0.012)
+            // 5. Random Damping 
             if (!locks.dampingX) {
                  ui.dampingX.value = 0.002 + Math.random() * 0.01;
             }
@@ -545,14 +599,21 @@
                  ui.dampingY.value = 0.002 + Math.random() * 0.01;
             }
             
-            // 6. Random Cycle Count - AESTHETIC RANGE (80 to 300)
+            // 6. Random Cycle Count 
             if (!locks.cycles) {
                 ui.cycles.value = 80 + Math.floor(Math.random() * 220);
             }
 
-            // 7. Random Line Type (mostly solid)
+            // 7. Random Line Type 
             if (!locks.lineType) {
                 ui.lineType.value = Math.random() > 0.8 ? 'dashed' : 'solid';
+            }
+            
+            // 8. Random Color Theme
+            if (!locks.color) {
+                const theme = themes[Math.floor(Math.random() * themes.length)];
+                config.bgColor = theme.bg;
+                config.lineColor = theme.line;
             }
 
             updateConfigFromUI();
@@ -572,39 +633,41 @@
         const inputs = document.querySelectorAll('input[type=range]');
         inputs.forEach(input => {
             input.addEventListener('input', () => {
-                // Special case: modifying zoom shouldn't necessarily reset the simulation 
-                // if we want a "live zoom" effect, but re-drawing is safer for artifacting.
-                // For simplicity, we restart.
                 updateConfigFromUI();
                 startSimulation(); 
             });
         });
 
-        document.getElementById('btn-download').addEventListener('click', () => {
-            // Create a new canvas to compose the image and text
+        // --- PNG Export ---
+        document.getElementById('btn-save-png').addEventListener('click', () => {
             const exportCanvas = document.createElement('canvas');
             const exportCtx = exportCanvas.getContext('2d');
             const dpr = window.devicePixelRatio || 1;
 
-            // Set dimensions. Add extra padding at the bottom for text.
             const paddingBottom = 120 * dpr;
             exportCanvas.width = canvas.width;
             exportCanvas.height = canvas.height + paddingBottom;
 
-            // Fill background
-            exportCtx.fillStyle = '#050505';
+            // Use current background color
+            exportCtx.fillStyle = config.bgColor;
             exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
 
-            // Draw the simulation canvas onto the export canvas
             exportCtx.drawImage(canvas, 0, 0);
 
-            // Configure text styling
-            exportCtx.fillStyle = '#888888';
+            // Text contrast logic
+            // Parse hex/rgba to check brightness or just use specific colors
+            // Simpler: Use the line color for text, but opaque
+            let textColor = config.lineColor;
+            if(textColor.includes('rgba')) {
+                // Replace alpha 0.6 with 1.0 for readability
+                textColor = textColor.replace(/[\d\.]+\)$/, "1.0)");
+            }
+
+            exportCtx.fillStyle = textColor;
             exportCtx.font = `${10 * dpr}px 'Courier New', monospace`;
             exportCtx.textAlign = 'left';
             exportCtx.textBaseline = 'top';
 
-            // Prepare text lines
             const textLines = [
                 `Ratio: ${config.ratio.toFixed(3)} | Offset: ${config.offset.toFixed(3)} | Phase: ${ui.phase.value}°`,
                 `Amp X: ${config.ampX.toFixed(2)} | Amp Y: ${config.ampY.toFixed(2)}`,
@@ -612,7 +675,6 @@
                 `Cycles: ${ui.cycles.value} | Line: ${config.lineType.toUpperCase()}`
             ];
 
-            // Draw text at the bottom
             let textY = canvas.height + (20 * dpr);
             const textX = 20 * dpr;
             const lineHeight = 14 * dpr;
@@ -622,11 +684,64 @@
                 textY += lineHeight;
             });
 
-            // Download the composed image
             const link = document.createElement('a');
             link.download = 'thebenmeadows-pendulum.png';
             link.href = exportCanvas.toDataURL('image/png');
             link.click();
+        });
+        
+        // --- SVG Export ---
+        document.getElementById('btn-save-svg').addEventListener('click', () => {
+            const width = 1000;
+            const height = 1000;
+            const cx = width / 2;
+            const cy = height / 2;
+            const scale = 400 * config.zoom; // SVG scale unit
+            
+            // Construct SVG Path
+            let pathData = "";
+            let t = 0;
+            const step = 0.02;
+            
+            // Initial Move
+            const startPos = getPosition(0);
+            pathData += `M ${cx + startPos.x * scale} ${cy + startPos.y * scale} `;
+            
+            // Loop
+            while (t < config.maxTime) {
+                t += step;
+                const pos = getPosition(t);
+                pathData += `L ${cx + pos.x * scale} ${cy + pos.y * scale} `;
+            }
+
+            // Determine Stroke (opaque for SVG)
+            let strokeColor = config.lineColor;
+            if(strokeColor.includes('rgba')) {
+                strokeColor = strokeColor.replace(/[\d\.]+\)$/, "1.0)");
+            }
+            
+            // Dash Array
+            let dashAttr = "";
+            if(config.lineType === 'dashed') {
+                dashAttr = 'stroke-dasharray="4 8"';
+            }
+
+            const svgContent = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" style="background-color: ${config.bgColor}">
+    <rect width="100%" height="100%" fill="${config.bgColor}"/>
+    <path d="${pathData}" fill="none" stroke="${strokeColor}" stroke-width="0.5" ${dashAttr} />
+    <text x="20" y="${height - 20}" fill="${strokeColor}" font-family="Courier New" font-size="12">
+        Ratio: ${config.ratio.toFixed(3)} | Offset: ${config.offset.toFixed(3)} | Cycles: ${ui.cycles.value}
+    </text>
+</svg>`.trim();
+
+            const blob = new Blob([svgContent], { type: "image/svg+xml" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = "thebenmeadows-pendulum.svg";
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
         });
 
         // Init
