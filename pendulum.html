@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TheBenMeadows Pendulum Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom Slider Styling for a minimal, technical look */
+        input[type=range] {
+            -webkit-appearance: none; 
+            width: 100%; 
+            background: transparent; 
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #e5e5e5;
+            cursor: pointer;
+            margin-top: -5px; 
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+        
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            cursor: pointer;
+            background: #404040;
+            border-radius: 1.3px;
+        }
+        
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        /* Custom Scrollbar for the sidebar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333; 
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555; 
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace; /* Technical/Data font */
+        }
+        
+        canvas {
+            touch-action: none;
+        }
+        
+        .lock-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+    </style>
+</head>
+<body class="bg-black text-gray-300 h-screen w-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Left/Top: Canvas Area -->
+    <div class="relative flex-grow h-1/2 md:h-full w-full bg-[#050505] flex items-center justify-center overflow-hidden" id="canvas-container">
+        <canvas id="simCanvas"></canvas>
+        
+        <!-- Overlay Info -->
+        <div class="absolute top-6 left-6 pointer-events-none opacity-70 text-xs md:text-sm">
+            <h1 class="text-white font-bold tracking-widest mb-1">THEBENMEADOWS PENDULUM SIMULATOR</h1>
+            <div id="status" class="text-green-500">ACTIVE</div>
+        </div>
+    </div>
+
+    <!-- Right/Bottom: Controls -->
+    <div class="w-full md:w-96 h-1/2 md:h-full bg-[#0f0f0f] border-t md:border-t-0 md:border-l border-[#222] flex flex-col z-10">
+        
+        <div class="p-6 border-b border-[#222] flex justify-between items-center">
+            <h2 class="text-white text-sm font-bold tracking-wider">PARAMETERS</h2>
+            <button id="btn-random" class="text-xs bg-[#222] hover:bg-white hover:text-black text-gray-300 px-3 py-1 transition-colors uppercase tracking-wider">
+                Randomize
+            </button>
+        </div>
+
+        <div class="flex-grow overflow-y-auto p-6 space-y-8">
+            
+            <!-- Harmonics (Period Ratio & Offset) -->
+            <div class="space-y-3">
+                <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider">
+                    <div class="flex items-center gap-2">
+                        <span>Period Ratio</span>
+                        <button id="lock-ratio" class="lock-btn text-gray-600 hover:text-white" onclick="toggleLock('ratio')">
+                            <!-- Unlocked Icon (Open) -->
+                            <svg class="icon-unlocked block" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                            <!-- Locked Icon (Closed) -->
+                            <svg class="icon-locked hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                    </div>
+                    <span id="val-ratio" class="text-white">1.500</span>
+                </div>
+                <input type="range" id="ratio" min="1.0" max="3.0" step="0.01" value="1.5">
+                
+                <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider mt-2">
+                    <div class="flex items-center gap-2">
+                        <span>Period Offset</span>
+                        <button id="lock-offset" class="lock-btn text-gray-600 hover:text-white" onclick="toggleLock('offset')">
+                            <svg class="icon-unlocked block" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                            <svg class="icon-locked hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                    </div>
+                    <span id="val-offset" class="text-white">0.005</span>
+                </div>
+                <input type="range" id="offset" min="0.000" max="0.050" step="0.001" value="0.005">
+                
+                <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider mt-2">
+                    <div class="flex items-center gap-2">
+                        <span>Phase Offset</span>
+                        <button id="lock-phase" class="lock-btn text-red-500 hover:text-white" onclick="toggleLock('phase')">
+                            <svg class="icon-unlocked hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                            <svg class="icon-locked block" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                    </div>
+                    <span id="val-phase" class="text-white">90°</span>
+                </div>
+                <input type="range" id="phase" min="0" max="360" step="1" value="90">
+                
+                <p class="text-[10px] text-gray-600 mt-1">Ratio sets shape. Offset rotates it. Phase opens loops.</p>
+            </div>
+
+            <!-- Amplitude Controls -->
+            <div class="space-y-3">
+                <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider">
+                    <div class="flex items-center gap-2">
+                        <span>Amplitude X</span>
+                        <button id="lock-ampX" class="lock-btn text-gray-600 hover:text-white" onclick="toggleLock('ampX')">
+                            <svg class="icon-unlocked block" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                            <svg class="icon-locked hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                    </div>
+                    <span id="val-amp-x" class="text-white">1.00</span>
+                </div>
+                <input type="range" id="amp-x" min="0.1" max="1.5" step="0.01" value="1.00">
+
+                <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider">
+                    <div class="flex items-center gap-2">
+                        <span>Amplitude Y</span>
+                        <button id="lock-ampY" class="lock-btn text-gray-600 hover:text-white" onclick="toggleLock('ampY')">
+                            <svg class="icon-unlocked block" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                            <svg class="icon-locked hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                    </div>
+                    <span id="val-amp-y" class="text-white">1.00</span>
+                </div>
+                <input type="range" id="amp-y" min="0.1" max="1.5" step="0.01" value="1.00">
+            </div>
+
+            <!-- Damping Controls -->
+            <div class="space-y-3">
+                <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider">
+                    <div class="flex items-center gap-2">
+                        <span>Damping X</span>
+                        <button id="lock-dampingX" class="lock-btn text-gray-600 hover:text-white" onclick="toggleLock('dampingX')">
+                            <svg class="icon-unlocked block" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                            <svg class="icon-locked hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                    </div>
+                    <span id="val-damping-x" class="text-white">0.005</span>
+                </div>
+                <input type="range" id="damping-x" min="0" max="0.05" step="0.0001" value="0.005">
+
+                <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider mt-2">
+                    <div class="flex items-center gap-2">
+                        <span>Damping Y</span>
+                        <button id="lock-dampingY" class="lock-btn text-gray-600 hover:text-white" onclick="toggleLock('dampingY')">
+                            <svg class="icon-unlocked block" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                            <svg class="icon-locked hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                    </div>
+                    <span id="val-damping-y" class="text-white">0.005</span>
+                </div>
+                <input type="range" id="damping-y" min="0" max="0.05" step="0.0001" value="0.005">
+            </div>
+
+            <!-- Time/Cycle Controls -->
+            <div class="space-y-3 pt-4 border-t border-[#222]">
+                <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider">
+                    <div class="flex items-center gap-2">
+                        <span>Cycle Count (Loops)</span>
+                        <button id="lock-cycles" class="lock-btn text-gray-600 hover:text-white" onclick="toggleLock('cycles')">
+                            <svg class="icon-unlocked block" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                            <svg class="icon-locked hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                    </div>
+                    <span id="val-cycles" class="text-white">100</span>
+                </div>
+                <input type="range" id="cycles" min="1" max="500" step="1" value="100">
+                
+                 <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider mt-2">
+                    <div class="flex items-center gap-2">
+                        <span>Swing Time (Speed)</span>
+                        <button id="lock-swingTime" class="lock-btn text-red-500 hover:text-white" onclick="toggleLock('swingTime')">
+                            <svg class="icon-unlocked hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                            <svg class="icon-locked block" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                    </div>
+                    <span id="val-swing-time" class="text-white">100x</span>
+                </div>
+                <input type="range" id="swing-time" min="1" max="100" step="1" value="100">
+
+                 <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider mt-2">
+                    <div class="flex items-center gap-2">
+                        <span>Line Type</span>
+                        <button id="lock-lineType" class="lock-btn text-gray-600 hover:text-white" onclick="toggleLock('lineType')">
+                            <svg class="icon-unlocked block" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                            <svg class="icon-locked hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <select id="line-type" class="w-full bg-[#222] text-gray-300 text-xs p-2 rounded-sm outline-none border border-[#404040]">
+                    <option value="solid">Solid</option>
+                    <option value="dashed">Dashed</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="p-6 border-t border-[#222] bg-[#0f0f0f]">
+            <button id="btn-generate" class="w-full bg-white text-black py-3 text-xs font-bold tracking-widest hover:bg-gray-200 transition-colors uppercase">
+                Generate System
+            </button>
+            <div class="flex gap-2 mt-3">
+                <button onclick="resetToDefault()" class="w-1/2 border border-[#333] text-gray-400 py-2 text-xs font-bold tracking-widest hover:text-white hover:border-white transition-colors uppercase">
+                    Reset
+                </button>
+                <button id="btn-download" class="w-1/2 border border-[#333] text-gray-400 py-2 text-xs font-bold tracking-widest hover:text-white hover:border-white transition-colors uppercase">
+                    Save Img
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /**
+         * Pursuit of Equilibrium - Algorithm Simulator
+         */
+
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
+
+        // State
+        let animationId;
+        let time = 0;
+        let isSimulating = false;
+        
+        // Lock State: true = locked (don't change), false = unlocked (randomize allowed)
+        const locks = {
+            ratio: false,
+            offset: false,
+            phase: true,
+            ampX: false,
+            ampY: false,
+            dampingX: false,
+            dampingY: false,
+            cycles: false,
+            swingTime: true,
+            lineType: false
+        };
+        
+        // Configuration Object
+        const config = {
+            basePeriod: 2.0, // Fixed base
+            ratio: 1.5,
+            offset: 0.005,
+            
+            ampX: 1.0,
+            ampY: 1.0,
+            
+            dampingX: 0.005, 
+            dampingY: 0.005,
+            
+            phaseY: Math.PI / 2, // 90 degrees
+            
+            speed: 100,    
+            maxTime: 200, // Derived from cycles
+            
+            scale: 150,
+            lineType: 'solid'
+        };
+
+        // UI Elements Cache
+        const ui = {
+            ratio: document.getElementById('ratio'),
+            offset: document.getElementById('offset'),
+            phase: document.getElementById('phase'),
+            ampX: document.getElementById('amp-x'),
+            ampY: document.getElementById('amp-y'),
+            dampingX: document.getElementById('damping-x'),
+            dampingY: document.getElementById('damping-y'),
+            cycles: document.getElementById('cycles'),
+            swingTime: document.getElementById('swing-time'),
+            lineType: document.getElementById('line-type'),
+            status: document.getElementById('status'),
+            // Labels
+            lblRatio: document.getElementById('val-ratio'),
+            lblOffset: document.getElementById('val-offset'),
+            lblPhase: document.getElementById('val-phase'),
+            lblAmpX: document.getElementById('val-amp-x'),
+            lblAmpY: document.getElementById('val-amp-y'),
+            lblDampingX: document.getElementById('val-damping-x'),
+            lblDampingY: document.getElementById('val-damping-y'),
+            lblCycles: document.getElementById('val-cycles'),
+            lblSwingTime: document.getElementById('val-swing-time'),
+        };
+        
+        function toggleLock(paramKey) {
+            locks[paramKey] = !locks[paramKey];
+            const btn = document.getElementById(`lock-${paramKey}`);
+            const iconUnlocked = btn.querySelector('.icon-unlocked');
+            const iconLocked = btn.querySelector('.icon-locked');
+            
+            if (locks[paramKey]) {
+                btn.classList.add('text-red-500');
+                btn.classList.remove('text-gray-600');
+                iconUnlocked.classList.add('hidden');
+                iconUnlocked.classList.remove('block');
+                iconLocked.classList.add('block');
+                iconLocked.classList.remove('hidden');
+            } else {
+                btn.classList.add('text-gray-600');
+                btn.classList.remove('text-red-500');
+                iconUnlocked.classList.add('block');
+                iconUnlocked.classList.remove('hidden');
+                iconLocked.classList.add('hidden');
+                iconLocked.classList.remove('block');
+            }
+        }
+
+        function resizeCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = container.getBoundingClientRect();
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            
+            ctx.scale(dpr, dpr);
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+            
+            const minDim = Math.min(rect.width, rect.height);
+            config.scale = (minDim / 2) * 0.85; 
+            
+            if(isSimulating) startSimulation();
+        }
+
+        function getPosition(t) {
+            // Physics Engine
+            const periodX = config.basePeriod;
+            const periodY = (config.basePeriod * config.ratio) + config.offset;
+
+            const omegaX = 2 * Math.PI / periodX;
+            const omegaY = 2 * Math.PI / periodY;
+            
+            const decayX = Math.exp(-config.dampingX * t);
+            const decayY = Math.exp(-config.dampingY * t);
+            
+            const x = config.ampX * decayX * Math.sin(omegaX * t);
+            // Phase Offset is applied to Y
+            const y = config.ampY * decayY * Math.sin(omegaY * t + config.phaseY);
+            
+            return { x, y };
+        }
+
+        function drawStep() {
+            if (!isSimulating) return;
+
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.6)"; 
+            ctx.lineWidth = 0.8;
+
+            if (config.lineType === 'dashed') {
+                const dashSize = 2 * (window.devicePixelRatio || 1);
+                const gapSize = 4 * (window.devicePixelRatio || 1);
+                ctx.setLineDash([dashSize, gapSize]);
+            } else {
+                ctx.setLineDash([]);
+            }
+
+            ctx.beginPath();
+
+            for (let i = 0; i < config.speed; i++) {
+                const posPrev = getPosition(time);
+                
+                const cx = canvas.width / (2 * (window.devicePixelRatio || 1));
+                const cy = canvas.height / (2 * (window.devicePixelRatio || 1));
+                
+                const screenXPrev = cx + posPrev.x * config.scale;
+                const screenYPrev = cy + posPrev.y * config.scale;
+
+                ctx.moveTo(screenXPrev, screenYPrev);
+
+                time += 0.02; // Fixed physics timestep
+
+                const posNext = getPosition(time);
+                const screenXNext = cx + posNext.x * config.scale;
+                const screenYNext = cy + posNext.y * config.scale;
+
+                ctx.lineTo(screenXNext, screenYNext);
+
+                if (time > config.maxTime) {
+                    isSimulating = false;
+                    ui.status.innerText = "COMPLETE";
+                    ui.status.className = "text-gray-500";
+                    cancelAnimationFrame(animationId);
+                    return;
+                }
+            }
+            
+            ctx.stroke();
+            animationId = requestAnimationFrame(drawStep);
+        }
+
+        function startSimulation() {
+            isSimulating = true;
+            time = 0;
+            
+            const dpr = window.devicePixelRatio || 1;
+            ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+            
+            ui.status.innerText = "GENERATING...";
+            ui.status.className = "text-green-500 animate-pulse";
+            
+            if (animationId) cancelAnimationFrame(animationId);
+            animationId = requestAnimationFrame(drawStep);
+        }
+
+        function updateConfigFromUI() {
+            config.ratio = parseFloat(ui.ratio.value);
+            config.offset = parseFloat(ui.offset.value);
+            config.ampX = parseFloat(ui.ampX.value);
+            config.ampY = parseFloat(ui.ampY.value);
+            config.dampingX = parseFloat(ui.dampingX.value);
+            config.dampingY = parseFloat(ui.dampingY.value);
+            config.phaseY = parseFloat(ui.phase.value) * (Math.PI / 180);
+            
+            const cycles = parseInt(ui.cycles.value);
+            config.maxTime = cycles * config.basePeriod;
+            
+            config.speed = parseInt(ui.swingTime.value);
+            config.lineType = ui.lineType.value;
+
+            // Update Labels
+            ui.lblRatio.innerText = config.ratio.toFixed(3);
+            ui.lblOffset.innerText = config.offset.toFixed(3);
+            ui.lblPhase.innerText = ui.phase.value + "°";
+            ui.lblAmpX.innerText = config.ampX.toFixed(2);
+            ui.lblAmpY.innerText = config.ampY.toFixed(2);
+            ui.lblDampingX.innerText = config.dampingX.toFixed(4);
+            ui.lblDampingY.innerText = config.dampingY.toFixed(4);
+            ui.lblCycles.innerText = cycles;
+            ui.lblSwingTime.innerText = config.speed + "x";
+        }
+
+        function resetToDefault() {
+            // Only reset unlocked variables or reset everything?
+            // Standard behavior for "Reset" usually overrides locks, 
+            // but let's respect locks if that's the user's intent. 
+            // However, usually Reset implies "Factory Reset".
+            // I will do a full reset.
+            ui.ratio.value = 1.5;
+            ui.offset.value = 0.005;
+            ui.phase.value = 90;
+            ui.ampX.value = 1.0;
+            ui.ampY.value = 1.0;
+            ui.dampingX.value = 0.005;
+            ui.dampingY.value = 0.005;
+            ui.cycles.value = 100;
+            ui.swingTime.value = 100;
+            ui.lineType.value = 'solid';
+            
+            updateConfigFromUI();
+            startSimulation();
+        }
+
+        function randomizeParams() {
+            // 1. Pick a harmonic ratio
+            if (!locks.ratio) {
+                const ratios = [1.0, 1.5, 1.333, 2.0, 0.666, 0.75, 1.25, 2.5, 3.0];
+                const randomRatio = ratios[Math.floor(Math.random() * ratios.length)];
+                ui.ratio.value = randomRatio;
+            }
+
+            // 2. Random small offset for precession
+            if (!locks.offset) {
+                const randomOffset = Math.random() * 0.02; 
+                ui.offset.value = randomOffset;
+            }
+
+            // 3. Random Phase (0 to 360)
+            if (!locks.phase) {
+                const randomPhase = Math.floor(Math.random() * 360);
+                ui.phase.value = randomPhase;
+            }
+
+            // 4. Random Amplitudes (0.5 to 1.2)
+            if (!locks.ampX) {
+                ui.ampX.value = 0.5 + Math.random() * 0.7;
+            }
+            if (!locks.ampY) {
+                ui.ampY.value = 0.5 + Math.random() * 0.7;
+            }
+
+            // 5. Random Damping (0.001 to 0.015)
+            if (!locks.dampingX) {
+                ui.dampingX.value = 0.001 + Math.random() * 0.014;
+            }
+            if (!locks.dampingY) {
+                ui.dampingY.value = 0.001 + Math.random() * 0.014;
+            }
+            
+            // 6. Random Cycle Count (30 to 150)
+            if (!locks.cycles) {
+                ui.cycles.value = 30 + Math.floor(Math.random() * 120);
+            }
+
+            // 7. Random Line Type (mostly solid)
+            if (!locks.lineType) {
+                ui.lineType.value = Math.random() > 0.8 ? 'dashed' : 'solid';
+            }
+
+            updateConfigFromUI();
+            startSimulation();
+        }
+
+        // Listeners
+        window.addEventListener('resize', resizeCanvas);
+        document.getElementById('btn-generate').addEventListener('click', startSimulation);
+        document.getElementById('btn-random').addEventListener('click', randomizeParams);
+        
+        ui.lineType.addEventListener('change', () => {
+            updateConfigFromUI();
+            startSimulation();
+        });
+        
+        const inputs = document.querySelectorAll('input[type=range]');
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                updateConfigFromUI();
+                startSimulation(); 
+            });
+        });
+
+        document.getElementById('btn-download').addEventListener('click', () => {
+            // Create a new canvas to compose the image and text
+            const exportCanvas = document.createElement('canvas');
+            const exportCtx = exportCanvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+
+            // Set dimensions. Add extra padding at the bottom for text.
+            const paddingBottom = 120 * dpr;
+            exportCanvas.width = canvas.width;
+            exportCanvas.height = canvas.height + paddingBottom;
+
+            // Fill background
+            exportCtx.fillStyle = '#050505';
+            exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+            // Draw the simulation canvas onto the export canvas
+            exportCtx.drawImage(canvas, 0, 0);
+
+            // Configure text styling
+            exportCtx.fillStyle = '#888888';
+            exportCtx.font = `${10 * dpr}px 'Courier New', monospace`;
+            exportCtx.textAlign = 'left';
+            exportCtx.textBaseline = 'top';
+
+            // Prepare text lines
+            const textLines = [
+                `Ratio: ${config.ratio.toFixed(3)} | Offset: ${config.offset.toFixed(3)} | Phase: ${ui.phase.value}°`,
+                `Amp X: ${config.ampX.toFixed(2)} | Amp Y: ${config.ampY.toFixed(2)}`,
+                `Damping X: ${config.dampingX.toFixed(4)} | Damping Y: ${config.dampingY.toFixed(4)}`,
+                `Cycles: ${ui.cycles.value} | Line: ${config.lineType.toUpperCase()}`
+            ];
+
+            // Draw text at the bottom
+            let textY = canvas.height + (20 * dpr);
+            const textX = 20 * dpr;
+            const lineHeight = 14 * dpr;
+
+            textLines.forEach(line => {
+                exportCtx.fillText(line, textX, textY);
+                textY += lineHeight;
+            });
+
+            // Download the composed image
+            const link = document.createElement('a');
+            link.download = 'thebenmeadows-pendulum.png';
+            link.href = exportCanvas.toDataURL('image/png');
+            link.click();
+        });
+
+        // Init
+        resizeCanvas();
+        updateConfigFromUI();
+        startSimulation();
+
+    </script>
+</body>
+</html>
