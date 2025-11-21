@@ -231,6 +231,15 @@
                     <option value="dashed">Dashed</option>
                 </select>
             </div>
+            
+            <!-- View Controls -->
+             <div class="space-y-3 pt-4 border-t border-[#222]">
+                <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider">
+                    <span>Global Zoom</span>
+                    <span id="val-zoom" class="text-white">1.0x</span>
+                </div>
+                <input type="range" id="zoom" min="0.1" max="3.0" step="0.1" value="1.0">
+            </div>
         </div>
 
         <!-- Action Buttons -->
@@ -296,6 +305,7 @@
             maxTime: 200, // Derived from cycles
             
             scale: 150,
+            zoom: 1.0,
             lineType: 'solid'
         };
 
@@ -311,6 +321,7 @@
             cycles: document.getElementById('cycles'),
             swingTime: document.getElementById('swing-time'),
             lineType: document.getElementById('line-type'),
+            zoom: document.getElementById('zoom'),
             status: document.getElementById('status'),
             // Labels
             lblRatio: document.getElementById('val-ratio'),
@@ -322,6 +333,7 @@
             lblDampingY: document.getElementById('val-damping-y'),
             lblCycles: document.getElementById('val-cycles'),
             lblSwingTime: document.getElementById('val-swing-time'),
+            lblZoom: document.getElementById('val-zoom'),
         };
         
         function toggleLock(paramKey) {
@@ -359,7 +371,8 @@
             canvas.style.height = `${rect.height}px`;
             
             const minDim = Math.min(rect.width, rect.height);
-            config.scale = (minDim / 2) * 0.85; 
+            // Lowered scale factor from 0.85 to 0.42 to accommodate Amplitude 2.0
+            config.scale = (minDim / 2) * 0.42; 
             
             if(isSimulating) startSimulation();
         }
@@ -398,22 +411,25 @@
 
             ctx.beginPath();
 
+            // Calculate effective scale including zoom
+            const effectiveScale = config.scale * config.zoom;
+
             for (let i = 0; i < config.speed; i++) {
                 const posPrev = getPosition(time);
                 
                 const cx = canvas.width / (2 * (window.devicePixelRatio || 1));
                 const cy = canvas.height / (2 * (window.devicePixelRatio || 1));
                 
-                const screenXPrev = cx + posPrev.x * config.scale;
-                const screenYPrev = cy + posPrev.y * config.scale;
+                const screenXPrev = cx + posPrev.x * effectiveScale;
+                const screenYPrev = cy + posPrev.y * effectiveScale;
 
                 ctx.moveTo(screenXPrev, screenYPrev);
 
                 time += 0.02; // Fixed physics timestep
 
                 const posNext = getPosition(time);
-                const screenXNext = cx + posNext.x * config.scale;
-                const screenYNext = cy + posNext.y * config.scale;
+                const screenXNext = cx + posNext.x * effectiveScale;
+                const screenYNext = cy + posNext.y * effectiveScale;
 
                 ctx.lineTo(screenXNext, screenYNext);
 
@@ -457,6 +473,7 @@
             config.maxTime = cycles * config.basePeriod;
             
             config.speed = parseInt(ui.swingTime.value);
+            config.zoom = parseFloat(ui.zoom.value);
             config.lineType = ui.lineType.value;
 
             // Update Labels
@@ -469,14 +486,10 @@
             ui.lblDampingY.innerText = config.dampingY.toFixed(4);
             ui.lblCycles.innerText = cycles;
             ui.lblSwingTime.innerText = config.speed + "x";
+            ui.lblZoom.innerText = config.zoom.toFixed(1) + "x";
         }
 
         function resetToDefault() {
-            // Only reset unlocked variables or reset everything?
-            // Standard behavior for "Reset" usually overrides locks, 
-            // but let's respect locks if that's the user's intent. 
-            // However, usually Reset implies "Factory Reset".
-            // I will do a full reset.
             ui.ratio.value = 1.5;
             ui.offset.value = 0.005;
             ui.phase.value = 90;
@@ -487,6 +500,7 @@
             ui.cycles.value = 100;
             ui.swingTime.value = 100;
             ui.lineType.value = 'solid';
+            ui.zoom.value = 1.0;
             
             updateConfigFromUI();
             startSimulation();
@@ -504,16 +518,9 @@
                 ui.ratio.value = randomRatio;
             }
 
-            // 2. Random small offset for precession - EXPANDED RANGE
+            // 2. Random small offset - AESTHETIC RANGE (0 to 0.02)
             if (!locks.offset) {
-                // Weighted random: mostly small offsets, occasionally larger ones
-                let randomOffset;
-                if (Math.random() > 0.8) {
-                    randomOffset = 0.05 + Math.random() * 0.15; // 0.05 - 0.20
-                } else {
-                    randomOffset = Math.random() * 0.03; // 0 - 0.03
-                }
-                ui.offset.value = randomOffset;
+                ui.offset.value = Math.random() * 0.02;
             }
 
             // 3. Random Phase (0 to 360)
@@ -522,35 +529,25 @@
                 ui.phase.value = randomPhase;
             }
 
-            // 4. Random Amplitudes (0.5 to 2.0)
+            // 4. Random Amplitudes - AESTHETIC RANGE (0.8 to 1.4)
             if (!locks.ampX) {
-                ui.ampX.value = 0.5 + Math.random() * 1.5;
+                ui.ampX.value = 0.8 + Math.random() * 0.6;
             }
             if (!locks.ampY) {
-                ui.ampY.value = 0.5 + Math.random() * 1.5;
+                ui.ampY.value = 0.8 + Math.random() * 0.6;
             }
 
-            // 5. Random Damping (0.001 to 0.1)
+            // 5. Random Damping - AESTHETIC RANGE (0.002 to 0.012)
             if (!locks.dampingX) {
-                // Weighted: mostly low damping, occasionally high
-                if (Math.random() > 0.85) {
-                     ui.dampingX.value = 0.02 + Math.random() * 0.08; // Fast decay
-                } else {
-                     ui.dampingX.value = 0.001 + Math.random() * 0.015; // Slow decay
-                }
+                 ui.dampingX.value = 0.002 + Math.random() * 0.01;
             }
             if (!locks.dampingY) {
-                 if (Math.random() > 0.85) {
-                     ui.dampingY.value = 0.02 + Math.random() * 0.08;
-                } else {
-                     ui.dampingY.value = 0.001 + Math.random() * 0.015;
-                }
+                 ui.dampingY.value = 0.002 + Math.random() * 0.01;
             }
             
-            // 6. Random Cycle Count (30 to 500)
+            // 6. Random Cycle Count - AESTHETIC RANGE (80 to 300)
             if (!locks.cycles) {
-                // Weighted towards complexity
-                ui.cycles.value = 50 + Math.floor(Math.random() * 450);
+                ui.cycles.value = 80 + Math.floor(Math.random() * 220);
             }
 
             // 7. Random Line Type (mostly solid)
@@ -575,6 +572,9 @@
         const inputs = document.querySelectorAll('input[type=range]');
         inputs.forEach(input => {
             input.addEventListener('input', () => {
+                // Special case: modifying zoom shouldn't necessarily reset the simulation 
+                // if we want a "live zoom" effect, but re-drawing is safer for artifacting.
+                // For simplicity, we restart.
                 updateConfigFromUI();
                 startSimulation(); 
             });
