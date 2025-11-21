@@ -104,7 +104,8 @@
                     </div>
                     <span id="val-ratio" class="text-white">1.500</span>
                 </div>
-                <input type="range" id="ratio" min="1.0" max="3.0" step="0.01" value="1.5">
+                <!-- INCREASED MAX TO 10.0 -->
+                <input type="range" id="ratio" min="1.0" max="10.0" step="0.01" value="1.5">
                 
                 <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider mt-2">
                     <div class="flex items-center gap-2">
@@ -116,7 +117,8 @@
                     </div>
                     <span id="val-offset" class="text-white">0.005</span>
                 </div>
-                <input type="range" id="offset" min="0.000" max="0.050" step="0.001" value="0.005">
+                <!-- INCREASED MAX TO 0.20 -->
+                <input type="range" id="offset" min="0.000" max="0.200" step="0.001" value="0.005">
                 
                 <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider mt-2">
                     <div class="flex items-center gap-2">
@@ -145,7 +147,8 @@
                     </div>
                     <span id="val-amp-x" class="text-white">1.00</span>
                 </div>
-                <input type="range" id="amp-x" min="0.1" max="1.5" step="0.01" value="1.00">
+                <!-- INCREASED MAX TO 2.0 -->
+                <input type="range" id="amp-x" min="0.1" max="2.0" step="0.01" value="1.00">
 
                 <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider">
                     <div class="flex items-center gap-2">
@@ -157,7 +160,7 @@
                     </div>
                     <span id="val-amp-y" class="text-white">1.00</span>
                 </div>
-                <input type="range" id="amp-y" min="0.1" max="1.5" step="0.01" value="1.00">
+                <input type="range" id="amp-y" min="0.1" max="2.0" step="0.01" value="1.00">
             </div>
 
             <!-- Damping Controls -->
@@ -172,7 +175,8 @@
                     </div>
                     <span id="val-damping-x" class="text-white">0.005</span>
                 </div>
-                <input type="range" id="damping-x" min="0" max="0.05" step="0.0001" value="0.005">
+                <!-- INCREASED MAX TO 0.1 -->
+                <input type="range" id="damping-x" min="0" max="0.1" step="0.0001" value="0.005">
 
                 <div class="flex justify-between text-xs text-gray-400 uppercase tracking-wider mt-2">
                     <div class="flex items-center gap-2">
@@ -184,7 +188,7 @@
                     </div>
                     <span id="val-damping-y" class="text-white">0.005</span>
                 </div>
-                <input type="range" id="damping-y" min="0" max="0.05" step="0.0001" value="0.005">
+                <input type="range" id="damping-y" min="0" max="0.1" step="0.0001" value="0.005">
             </div>
 
             <!-- Time/Cycle Controls -->
@@ -489,16 +493,26 @@
         }
 
         function randomizeParams() {
-            // 1. Pick a harmonic ratio
+            // 1. Pick a harmonic ratio - EXPANDED LIST
             if (!locks.ratio) {
-                const ratios = [1.0, 1.5, 1.333, 2.0, 0.666, 0.75, 1.25, 2.5, 3.0];
+                const ratios = [
+                    1.0, 1.5, 1.333, 2.0, 0.666, 0.75, 1.25, 2.5, 3.0, 
+                    3.5, 4.0, 5.0, 1.666, 1.75, 2.25, 2.333, 2.666,
+                    0.8, 0.6, 1.2, 1.4, 1.6, 1.8, 2.4, 2.8, 3.2, 4.5, 5.5, 6.0
+                ];
                 const randomRatio = ratios[Math.floor(Math.random() * ratios.length)];
                 ui.ratio.value = randomRatio;
             }
 
-            // 2. Random small offset for precession
+            // 2. Random small offset for precession - EXPANDED RANGE
             if (!locks.offset) {
-                const randomOffset = Math.random() * 0.02; 
+                // Weighted random: mostly small offsets, occasionally larger ones
+                let randomOffset;
+                if (Math.random() > 0.8) {
+                    randomOffset = 0.05 + Math.random() * 0.15; // 0.05 - 0.20
+                } else {
+                    randomOffset = Math.random() * 0.03; // 0 - 0.03
+                }
                 ui.offset.value = randomOffset;
             }
 
@@ -508,25 +522,35 @@
                 ui.phase.value = randomPhase;
             }
 
-            // 4. Random Amplitudes (0.5 to 1.2)
+            // 4. Random Amplitudes (0.5 to 2.0)
             if (!locks.ampX) {
-                ui.ampX.value = 0.5 + Math.random() * 0.7;
+                ui.ampX.value = 0.5 + Math.random() * 1.5;
             }
             if (!locks.ampY) {
-                ui.ampY.value = 0.5 + Math.random() * 0.7;
+                ui.ampY.value = 0.5 + Math.random() * 1.5;
             }
 
-            // 5. Random Damping (0.001 to 0.015)
+            // 5. Random Damping (0.001 to 0.1)
             if (!locks.dampingX) {
-                ui.dampingX.value = 0.001 + Math.random() * 0.014;
+                // Weighted: mostly low damping, occasionally high
+                if (Math.random() > 0.85) {
+                     ui.dampingX.value = 0.02 + Math.random() * 0.08; // Fast decay
+                } else {
+                     ui.dampingX.value = 0.001 + Math.random() * 0.015; // Slow decay
+                }
             }
             if (!locks.dampingY) {
-                ui.dampingY.value = 0.001 + Math.random() * 0.014;
+                 if (Math.random() > 0.85) {
+                     ui.dampingY.value = 0.02 + Math.random() * 0.08;
+                } else {
+                     ui.dampingY.value = 0.001 + Math.random() * 0.015;
+                }
             }
             
-            // 6. Random Cycle Count (30 to 150)
+            // 6. Random Cycle Count (30 to 500)
             if (!locks.cycles) {
-                ui.cycles.value = 30 + Math.floor(Math.random() * 120);
+                // Weighted towards complexity
+                ui.cycles.value = 50 + Math.floor(Math.random() * 450);
             }
 
             // 7. Random Line Type (mostly solid)
