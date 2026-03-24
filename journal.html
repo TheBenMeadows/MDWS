@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interstitial Journal - Time Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0f1114;
+    --surface: #16181d;
+    --surface-2: #1c1f26;
+    --border: #2a2d36;
+    --border-light: #353841;
+    --text: #e2e4e9;
+    --text-dim: #8b8f9a;
+    --text-muted: #565961;
+    --accent: #c9a227;
+    --accent-dim: rgba(201, 162, 39, 0.12);
+    --work: #4a9eff;
+    --work-bg: rgba(74, 158, 255, 0.1);
+    --daily: #6b7280;
+    --daily-bg: rgba(107, 114, 128, 0.1);
+    --admin: #a78bfa;
+    --admin-bg: rgba(167, 139, 250, 0.1);
+    --exercise: #34d399;
+    --exercise-bg: rgba(52, 211, 153, 0.1);
+    --social: #f472b6;
+    --social-bg: rgba(244, 114, 182, 0.1);
+    --personal: #fb923c;
+    --personal-bg: rgba(251, 146, 60, 0.1);
+    --errands: #facc15;
+    --errands-bg: rgba(250, 204, 21, 0.1);
+    --travel: #2dd4bf;
+    --travel-bg: rgba(45, 212, 191, 0.1);
+    --church: #c084fc;
+    --church-bg: rgba(192, 132, 252, 0.1);
+    --uncategorized: #52525b;
+    --uncategorized-bg: rgba(82, 82, 91, 0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  header h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  header h1 span { color: var(--accent); }
+
+  .drop-zone {
+    border: 1.5px dashed var(--border-light);
+    border-radius: 8px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface);
+    position: relative;
+  }
+
+  .drop-zone:hover, .drop-zone.active {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .drop-zone p {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+
+  .drop-zone p strong { color: var(--text); }
+
+  .drop-zone input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.2s;
+  }
+
+  .stat-card:hover { border-color: var(--border-light); }
+
+  .stat-card .toggle-hint {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 0.35rem;
+    font-style: italic;
+  }
+
+  .stat-card .label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-card .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .stat-card .sub {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 0.25rem;
+  }
+
+  .day-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+
+  .day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .day-header:hover { background: var(--surface-2); }
+
+  .day-header h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .day-header .day-total {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+
+  .day-body { padding: 1.25rem; }
+
+  .category-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .cat-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 70px;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .cat-label {
+    font-weight: 500;
+    text-transform: capitalize;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cat-bar-track {
+    height: 22px;
+    background: var(--surface-2);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .cat-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    min-width: 2px;
+  }
+
+  .cat-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-align: right;
+  }
+
+  .timeline {
+    border-left: 2px solid var(--border);
+    margin-left: 0.5rem;
+    padding-left: 1.25rem;
+  }
+
+  .timeline-entry {
+    position: relative;
+    padding-bottom: 0.75rem;
+    font-size: 0.82rem;
+  }
+
+  .timeline-entry::before {
+    content: '';
+    position: absolute;
+    left: -1.56rem;
+    top: 0.45rem;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border-light);
+    border: 2px solid var(--bg);
+  }
+
+  .timeline-time {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    margin-right: 0.5rem;
+  }
+
+  .timeline-desc { color: var(--text-dim); }
+
+  .timeline-cat {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 3px;
+    margin-left: 0.4rem;
+    font-weight: 500;
+    text-transform: capitalize;
+    vertical-align: middle;
+  }
+
+  .timeline-dur {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-left: 0.4rem;
+  }
+
+  .multi-day-chart {
+    margin-bottom: 2rem;
+  }
+
+  .multi-day-chart h3 {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem;
+  }
+
+  .stacked-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .stacked-row {
+    display: grid;
+    grid-template-columns: 90px 1fr 60px;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .stacked-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+
+  .stacked-track {
+    height: 28px;
+    background: var(--surface-2);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .stacked-segment {
+    height: 100%;
+    transition: width 0.5s ease;
+    position: relative;
+    cursor: default;
+  }
+
+  .stacked-segment:hover { opacity: 0.85; }
+
+  .stacked-total {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    text-align: right;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: capitalize;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+
+  .hidden { display: none; }
+
+  .no-data {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .period-summary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+
+  .period-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .period-header h3 {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .period-toggle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid rgba(201, 162, 39, 0.25);
+    border-radius: 4px;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .period-toggle:hover { background: rgba(201, 162, 39, 0.2); }
+
+  .period-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+
+  .period-table th {
+    text-align: left;
+    padding: 0.6rem 1rem;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+
+  .period-table th:not(:first-child) { text-align: right; }
+
+  .period-table td {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+
+  .period-table td:first-child {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .period-table td:not(:first-child) { text-align: right; }
+
+  .period-table tr:last-child td { border-bottom: none; }
+
+  .warnings {
+    background: rgba(251, 146, 60, 0.08);
+    border: 1px solid rgba(251, 146, 60, 0.2);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    color: #fb923c;
+  }
+
+  .warnings ul { list-style: none; padding: 0; }
+  .warnings li { padding: 0.15rem 0; }
+  .warnings li::before { content: '! '; font-weight: 700; }
+
+  @media (max-width: 640px) {
+    .cat-row { grid-template-columns: 90px 1fr 60px; }
+    .stacked-row { grid-template-columns: 70px 1fr 50px; }
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Interstitial <span>Journal</span></h1>
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+      <span id="fileCount" class="hidden" style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-muted);background:var(--surface-2);padding:0.3rem 0.7rem;border-radius:4px;border:1px solid var(--border)"></span>
+      <button id="clearBtn" class="hidden" style="font-family:'DM Sans',sans-serif;font-size:0.75rem;color:#f87171;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:4px;padding:0.3rem 0.7rem;cursor:pointer">Clear All</button>
+      <button id="exportBtn" class="hidden" style="font-family:'DM Sans',sans-serif;font-size:0.75rem;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(201,162,39,0.25);border-radius:4px;padding:0.3rem 0.7rem;cursor:pointer">Export HTML</button>
+      <div class="drop-zone" id="dropZone">
+        <p>Drop <strong>.md</strong> files here or click to select</p>
+        <input type="file" id="fileInput" multiple accept=".md,.txt">
+      </div>
+    </div>
+  </header>
+
+  <div id="warnings" class="warnings hidden"></div>
+  <div id="summaryGrid" class="summary-grid hidden"></div>
+  <div id="multiDayChart" class="multi-day-chart hidden"></div>
+  <div id="dayDetails"></div>
+  <div id="periodSummary" class="hidden"></div>
+  <div id="noData" class="no-data">No files loaded.</div>
+</div>
+
+<script>
+const CATEGORY_COLORS = {
+  work:           { color: '#4a9eff', bg: 'rgba(74, 158, 255, 0.15)' },
+  'daily living': { color: '#6b7280', bg: 'rgba(107, 114, 128, 0.15)' },
+  admin:          { color: '#a78bfa', bg: 'rgba(167, 139, 250, 0.15)' },
+  exercise:       { color: '#34d399', bg: 'rgba(52, 211, 153, 0.15)' },
+  social:         { color: '#f472b6', bg: 'rgba(244, 114, 182, 0.15)' },
+  personal:       { color: '#fb923c', bg: 'rgba(251, 146, 60, 0.15)' },
+  errands:        { color: '#facc15', bg: 'rgba(250, 204, 21, 0.15)' },
+  travel:         { color: '#2dd4bf', bg: 'rgba(45, 212, 191, 0.15)' },
+  church:         { color: '#c084fc', bg: 'rgba(192, 132, 252, 0.15)' },
+  uncategorized:  { color: '#52525b', bg: 'rgba(82, 82, 91, 0.15)' },
+};
+
+// Typo correction map
+const CATEGORY_ALIASES = {
+  'exervise': 'exercise',
+  'excercise': 'exercise',
+  'excersize': 'exercise',
+  'dailyliving': 'daily living',
+  'daily_living': 'daily living',
+};
+
+function normalizeCategory(raw) {
+  if (!raw) return 'uncategorized';
+  const c = raw.trim().toLowerCase();
+  return CATEGORY_ALIASES[c] || c;
+}
+
+function parseTime(s) {
+  const m = s.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+
+function fmtMin(mins) {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
+function fmtHours(mins) {
+  return (mins / 60).toFixed(1);
+}
+
+function parseMarkdown(text, filename) {
+  const warnings = [];
+
+  // Extract date from frontmatter
+  const dateMatch = text.match(/journal-date:\s*(\d{4}-\d{2}-\d{2})/);
+  const date = dateMatch ? dateMatch[1] : filename.replace('.md', '');
+
+  // Find lines between the TIME | DESCRIPTION header and the next section
+  const lines = text.split('\n');
+  let inTable = false;
+  const entries = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Detect table header
+    if (/^TIME\s*\|/.test(trimmed)) {
+      inTable = true;
+      continue;
+    }
+
+    // Stop at next section or blank-ish content
+    if (inTable && (trimmed.startsWith('<center>') || trimmed === '---')) {
+      inTable = false;
+      continue;
+    }
+
+    if (!inTable || !trimmed) continue;
+
+    // Parse: TIME | DESCRIPTION | CATEGORY | DETAIL
+    // Handle both "07:00 | desc | cat" and "07:00 | desc | cat | detail"
+    const parts = trimmed.split('|').map(p => p.trim());
+
+    // Detect malformed delimiter: line starts with a valid time but has no pipe,
+    // or only one segment after split (time glued to description via typo like 'l')
+    if (parts.length < 2) {
+      // Check if line looks like "HH:MM <char> description" with a non-pipe delimiter
+      const typoMatch = trimmed.match(/^(\d{1,2}:\d{2})\s+[^|]\s+/);
+      if (typoMatch) {
+        warnings.push(`${date} ${typoMatch[1]}: possible malformed delimiter -- line skipped: "${trimmed.slice(0, 60)}"`);
+      }
+      continue;
+    }
+
+    const time = parseTime(parts[0]);
+    if (time === null) continue;
+
+    const description = parts[1] || '';
+    const category = normalizeCategory(parts[2]);
+    const detail = parts[3] || '';
+
+    const hasCat = parts[2] && parts[2].trim();
+    entries.push({ time, timeStr: parts[0], description, category, detail, _hasCat: !!hasCat });
+  }
+
+  // Compute durations (each entry lasts until the next one starts)
+  for (let i = 0; i < entries.length; i++) {
+    if (i < entries.length - 1) {
+      entries[i].duration = entries[i + 1].time - entries[i].time;
+    } else {
+      entries[i].duration = 0; // last entry (e.g., "go to bed")
+    }
+  }
+
+  // Warn on missing categories, but skip the terminal entry (duration 0)
+  for (const e of entries) {
+    if (!e._hasCat && e.duration > 0) {
+      warnings.push(`${date} ${e.timeStr}: missing category for "${e.description}"`);
+    }
+  }
+
+  return { date, entries, warnings };
+}
+
+function aggregateByCategory(entries) {
+  const cats = {};
+  for (const e of entries) {
+    if (e.duration <= 0) continue;
+    if (!cats[e.category]) cats[e.category] = 0;
+    cats[e.category] += e.duration;
+  }
+  // Sort by duration descending
+  return Object.entries(cats)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, mins]) => ({ name, mins }));
+}
+
+function totalMinutes(entries) {
+  return entries.reduce((sum, e) => sum + e.duration, 0);
+}
+
+function getColor(cat) {
+  return CATEGORY_COLORS[cat] || CATEGORY_COLORS.uncategorized;
+}
+
+// ---- Rendering ----
+
+function renderAll(days) {
+  days.sort((a, b) => a.date.localeCompare(b.date));
+
+  const allWarnings = days.flatMap(d => d.warnings);
+  const warnEl = document.getElementById('warnings');
+  if (allWarnings.length) {
+    warnEl.classList.remove('hidden');
+    warnEl.innerHTML = '<ul>' + allWarnings.map(w => `<li>${w}</li>`).join('') + '</ul>';
+  } else {
+    warnEl.classList.add('hidden');
+  }
+
+  document.getElementById('noData').classList.add('hidden');
+
+  renderSummary(days);
+  if (days.length > 1) renderMultiDayChart(days);
+  renderDayDetails(days);
+  renderPeriodSummary(days);
+}
+
+// ---- Period (weekly / monthly) summary ----
+
+const periodState = { weekly: false, monthly: false }; // false = totals, true = averages
+
+function getISOWeek(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay() || 7;
+  d.setDate(d.getDate() + 4 - day);
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  const weekNum = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+  return `${d.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+}
+
+function getMonth(dateStr) {
+  return dateStr.slice(0, 7); // YYYY-MM
+}
+
+function groupDays(days, keyFn) {
+  const groups = {};
+  for (const day of days) {
+    const key = keyFn(day.date);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(day);
+  }
+  return groups;
+}
+
+function buildPeriodTable(groups, showAvg) {
+  // Collect all categories across all groups
+  const allCats = new Set();
+  Object.values(groups).forEach(gdays => {
+    gdays.forEach(d => d.entries.forEach(e => {
+      if (e.duration > 0) allCats.add(e.category);
+    }));
+  });
+  const catOrder = ['work', ...Array.from(allCats).filter(c => c !== 'work').sort()];
+
+  const sortedKeys = Object.keys(groups).sort();
+
+  let headCells = catOrder.map(c => {
+    const { color } = getColor(c);
+    return `<th style="color:${color}">${c}</th>`;
+  }).join('');
+
+  let rows = '';
+  for (const key of sortedKeys) {
+    const gdays = groups[key];
+    const numDays = gdays.length;
+    const allEntries = gdays.flatMap(d => d.entries);
+    const total = totalMinutes(allEntries);
+
+    let cells = '';
+    for (const cat of catOrder) {
+      const mins = allEntries.filter(e => e.category === cat).reduce((s, e) => s + e.duration, 0);
+      const val = showAvg ? Math.round(mins / numDays) : mins;
+      cells += `<td>${val > 0 ? fmtMin(val) : '-'}</td>`;
+    }
+
+    const totalVal = showAvg ? Math.round(total / numDays) : total;
+    const daysLabel = `<span style="color:var(--text-muted);font-size:0.7rem;margin-left:0.3rem">(${numDays}d)</span>`;
+    rows += `<tr><td>${key} ${daysLabel}</td>${cells}<td style="color:var(--text)">${fmtMin(totalVal)}</td></tr>`;
+  }
+
+  return `
+    <table class="period-table">
+      <thead><tr><th>Period</th>${headCells}<th>Total</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function renderPeriodSummary(days) {
+  const el = document.getElementById('periodSummary');
+  if (days.length < 2) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+
+  const weeklyGroups = groupDays(days, getISOWeek);
+  const monthlyGroups = groupDays(days, getMonth);
+
+  const wLabel = periodState.weekly ? 'Showing Averages' : 'Showing Totals';
+  const mLabel = periodState.monthly ? 'Showing Averages' : 'Showing Totals';
+
+  el.innerHTML = `
+    <div class="period-summary">
+      <div class="period-header">
+        <h3>Weekly Summary</h3>
+        <span class="period-toggle" id="weeklyToggle">${wLabel}</span>
+      </div>
+      ${buildPeriodTable(weeklyGroups, periodState.weekly)}
+    </div>
+    <div class="period-summary">
+      <div class="period-header">
+        <h3>Monthly Summary</h3>
+        <span class="period-toggle" id="monthlyToggle">${mLabel}</span>
+      </div>
+      ${buildPeriodTable(monthlyGroups, periodState.monthly)}
+    </div>
+  `;
+
+  document.getElementById('weeklyToggle').addEventListener('click', () => {
+    periodState.weekly = !periodState.weekly;
+    renderPeriodSummary(days);
+  });
+  document.getElementById('monthlyToggle').addEventListener('click', () => {
+    periodState.monthly = !periodState.monthly;
+    renderPeriodSummary(days);
+  });
+}
+
+let summaryShowAvg = false;
+
+function renderSummary(days) {
+  const grid = document.getElementById('summaryGrid');
+  grid.classList.remove('hidden');
+
+  const totalDays = days.length;
+  const allEntries = days.flatMap(d => d.entries);
+  const totalTracked = totalMinutes(allEntries);
+  const avgPerDay = Math.round(totalTracked / totalDays);
+
+  const workMins = allEntries
+    .filter(e => e.category === 'work')
+    .reduce((s, e) => s + e.duration, 0);
+  const avgWork = Math.round(workMins / totalDays);
+
+  const exMins = allEntries
+    .filter(e => e.category === 'exercise')
+    .reduce((s, e) => s + e.duration, 0);
+  const avgEx = Math.round(exMins / totalDays);
+
+  const mode = summaryShowAvg ? 'avg' : 'total';
+  const modeLabel = summaryShowAvg ? 'Daily Avg' : 'Total';
+  const hint = summaryShowAvg ? 'click for totals' : 'click for averages';
+
+  const trackedVal = summaryShowAvg ? fmtMin(avgPerDay) : fmtMin(totalTracked);
+  const trackedSub = summaryShowAvg ? `${fmtMin(totalTracked)} total` : `${fmtHours(avgPerDay)}h avg/day`;
+
+  const workVal = summaryShowAvg ? fmtMin(avgWork) : fmtMin(workMins);
+  const workSub = summaryShowAvg ? `${fmtMin(workMins)} total` : `${fmtHours(avgWork)}h avg/day`;
+
+  const exVal = summaryShowAvg ? fmtMin(avgEx) : fmtMin(exMins);
+  const exSub = summaryShowAvg ? `${fmtMin(exMins)} total` : `${totalDays} day${totalDays > 1 ? 's' : ''}`;
+
+  grid.innerHTML = `
+    <div class="stat-card">
+      <div class="label">Days Tracked</div>
+      <div class="value">${totalDays}</div>
+      <div class="sub">${days[0].date} - ${days[days.length - 1].date}</div>
+    </div>
+    <div class="stat-card" data-toggle="summary">
+      <div class="label">${modeLabel} Tracked</div>
+      <div class="value mono">${trackedVal}</div>
+      <div class="sub">${trackedSub}</div>
+      <div class="toggle-hint">${hint}</div>
+    </div>
+    <div class="stat-card" data-toggle="summary">
+      <div class="label">${modeLabel} Work</div>
+      <div class="value mono">${workVal}</div>
+      <div class="sub">${workSub}</div>
+      <div class="toggle-hint">${hint}</div>
+    </div>
+    <div class="stat-card" data-toggle="summary">
+      <div class="label">${modeLabel} Exercise</div>
+      <div class="value mono">${exVal}</div>
+      <div class="sub">${exSub}</div>
+      <div class="toggle-hint">${hint}</div>
+    </div>
+  `;
+
+  grid.querySelectorAll('[data-toggle="summary"]').forEach(card => {
+    card.addEventListener('click', () => {
+      summaryShowAvg = !summaryShowAvg;
+      renderSummary(days);
+    });
+  });
+}
+
+function renderMultiDayChart(days) {
+  const el = document.getElementById('multiDayChart');
+  el.classList.remove('hidden');
+
+  // Collect all categories across all days
+  const allCats = new Set();
+  days.forEach(d => {
+    d.entries.forEach(e => { if (e.duration > 0) allCats.add(e.category); });
+  });
+
+  // Fixed order: work first, then alphabetical
+  const catOrder = ['work', ...Array.from(allCats).filter(c => c !== 'work').sort()];
+  const maxTotal = Math.max(...days.map(d => totalMinutes(d.entries)));
+
+  let barsHtml = '';
+  for (const day of days) {
+    const cats = aggregateByCategory(day.entries);
+    const catMap = Object.fromEntries(cats.map(c => [c.name, c.mins]));
+    const total = totalMinutes(day.entries);
+
+    let segments = '';
+    for (const cat of catOrder) {
+      const mins = catMap[cat] || 0;
+      if (mins <= 0) continue;
+      const pct = (mins / maxTotal) * 100;
+      const { color } = getColor(cat);
+      segments += `<div class="stacked-segment" style="width:${pct}%;background:${color}" title="${cat}: ${fmtMin(mins)}"></div>`;
+    }
+
+    const dateLabel = day.date.slice(5); // MM-DD
+    barsHtml += `
+      <div class="stacked-row">
+        <span class="stacked-date">${dateLabel}</span>
+        <div class="stacked-track">${segments}</div>
+        <span class="stacked-total">${fmtHours(total)}h</span>
+      </div>`;
+  }
+
+  const legendHtml = catOrder.map(cat => {
+    const { color } = getColor(cat);
+    return `<div class="legend-item"><div class="legend-dot" style="background:${color}"></div>${cat}</div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <h3>Daily Breakdown</h3>
+    <div class="stacked-bars">${barsHtml}</div>
+    <div class="legend">${legendHtml}</div>
+  `;
+}
+
+function renderDayDetails(days) {
+  const el = document.getElementById('dayDetails');
+  // Reverse: most recent first
+  const sorted = [...days].reverse();
+
+  el.innerHTML = sorted.map(day => {
+    const cats = aggregateByCategory(day.entries);
+    const maxCat = cats.length ? cats[0].mins : 1;
+
+    const barsHtml = cats.map(c => {
+      const pct = (c.mins / maxCat) * 100;
+      const { color, bg } = getColor(c.name);
+      return `
+        <div class="cat-row">
+          <span class="cat-label" style="color:${color}">${c.name}</span>
+          <div class="cat-bar-track">
+            <div class="cat-bar-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+          <span class="cat-time">${fmtMin(c.mins)}</span>
+        </div>`;
+    }).join('');
+
+    const timelineHtml = day.entries.map(e => {
+      const { color, bg } = getColor(e.category);
+      const durStr = e.duration > 0 ? `<span class="timeline-dur">${fmtMin(e.duration)}</span>` : '';
+      const catBadge = `<span class="timeline-cat" style="color:${color};background:${bg}">${e.category}</span>`;
+      const detailStr = e.detail ? ` -- ${e.detail}` : '';
+      return `
+        <div class="timeline-entry">
+          <span class="timeline-time">${e.timeStr}</span>
+          <span class="timeline-desc">${e.description}${detailStr}</span>
+          ${catBadge}${durStr}
+        </div>`;
+    }).join('');
+
+    const total = totalMinutes(day.entries);
+    const workMins = day.entries.filter(e => e.category === 'work').reduce((s, e) => s + e.duration, 0);
+
+    return `
+      <div class="day-section">
+        <div class="day-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
+          <h2>${day.date}</h2>
+          <span class="day-total">tracked ${fmtMin(total)} / work ${fmtMin(workMins)}</span>
+        </div>
+        <div class="day-body">
+          <div class="category-bars">${barsHtml}</div>
+          <div class="timeline">${timelineHtml}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ---- Persistent storage ----
+// Uses window.storage API (claude.ai artifact storage)
+// Falls back to in-memory only if unavailable.
+// Raw markdown is stored per date: key = "journal:YYYY-MM-DD"
+
+const STORAGE_PREFIX = 'journal:';
+const STORAGE_INDEX_KEY = 'journal-index';
+const storageAvailable = typeof window.storage !== 'undefined';
+
+async function saveDay(date, rawMarkdown) {
+  if (!storageAvailable) return;
+  try {
+    await window.storage.set(STORAGE_PREFIX + date, rawMarkdown);
+    // Update index
+    let index = [];
+    try {
+      const idx = await window.storage.get(STORAGE_INDEX_KEY);
+      index = JSON.parse(idx.value);
+    } catch (_) {}
+    if (!index.includes(date)) {
+      index.push(date);
+      index.sort();
+      await window.storage.set(STORAGE_INDEX_KEY, JSON.stringify(index));
+    }
+  } catch (e) {
+    console.error('Storage save failed:', e);
+  }
+}
+
+async function deleteDay(date) {
+  if (!storageAvailable) return;
+  try {
+    await window.storage.delete(STORAGE_PREFIX + date);
+    try {
+      const idx = await window.storage.get(STORAGE_INDEX_KEY);
+      let index = JSON.parse(idx.value);
+      index = index.filter(d => d !== date);
+      await window.storage.set(STORAGE_INDEX_KEY, JSON.stringify(index));
+    } catch (_) {}
+  } catch (e) {
+    console.error('Storage delete failed:', e);
+  }
+}
+
+async function loadAllFromStorage() {
+  if (!storageAvailable) return [];
+  try {
+    const idx = await window.storage.get(STORAGE_INDEX_KEY);
+    const dates = JSON.parse(idx.value);
+    const days = [];
+    for (const date of dates) {
+      try {
+        const result = await window.storage.get(STORAGE_PREFIX + date);
+        const parsed = parseMarkdown(result.value, date + '.md');
+        days.push(parsed);
+      } catch (_) {
+        // Key missing or corrupt, skip
+      }
+    }
+    return days;
+  } catch (_) {
+    return [];
+  }
+}
+
+async function clearAllStorage() {
+  if (!storageAvailable) return;
+  try {
+    const idx = await window.storage.get(STORAGE_INDEX_KEY);
+    const dates = JSON.parse(idx.value);
+    for (const date of dates) {
+      try { await window.storage.delete(STORAGE_PREFIX + date); } catch (_) {}
+    }
+    await window.storage.delete(STORAGE_INDEX_KEY);
+  } catch (_) {}
+}
+
+// ---- File handling ----
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+let loadedDays = [];
+
+async function handleFiles(files) {
+  const mdFiles = Array.from(files).filter(f => f.name.endsWith('.md') || f.name.endsWith('.txt'));
+  if (!mdFiles.length) return;
+
+  const readers = mdFiles.map(f => {
+    return new Promise(resolve => {
+      const r = new FileReader();
+      r.onload = () => resolve({ name: f.name, text: r.result });
+      r.readAsText(f);
+    });
+  });
+
+  const results = await Promise.all(readers);
+  const newDays = results.map(r => parseMarkdown(r.text, r.name));
+
+  // Persist raw markdown per date
+  for (const r of results) {
+    const dateMatch = r.text.match(/journal-date:\s*(\d{4}-\d{2}-\d{2})/);
+    const date = dateMatch ? dateMatch[1] : r.name.replace('.md', '');
+    await saveDay(date, r.text);
+  }
+
+  // Merge with existing in-memory, deduplicate by date
+  const dateMap = new Map(loadedDays.map(d => [d.date, d]));
+  for (const d of newDays) dateMap.set(d.date, d);
+  loadedDays = Array.from(dateMap.values());
+
+  updateFileCount();
+  renderAll(loadedDays);
+}
+
+function updateFileCount() {
+  const countEl = document.getElementById('fileCount');
+  if (loadedDays.length > 0) {
+    countEl.textContent = `${loadedDays.length} day${loadedDays.length !== 1 ? 's' : ''} stored`;
+    countEl.classList.remove('hidden');
+    document.getElementById('clearBtn').classList.remove('hidden');
+    document.getElementById('exportBtn').classList.remove('hidden');
+  } else {
+    countEl.classList.add('hidden');
+    document.getElementById('clearBtn').classList.add('hidden');
+    document.getElementById('exportBtn').classList.add('hidden');
+  }
+}
+
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('active');
+});
+
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('active');
+  handleFiles(e.dataTransfer.files);
+});
+
+document.getElementById('clearBtn').addEventListener('click', async () => {
+  if (!confirm('Delete all stored journal data?')) return;
+  await clearAllStorage();
+  loadedDays = [];
+  updateFileCount();
+  document.getElementById('summaryGrid').classList.add('hidden');
+  document.getElementById('multiDayChart').classList.add('hidden');
+  document.getElementById('dayDetails').innerHTML = '';
+  document.getElementById('warnings').classList.add('hidden');
+  document.getElementById('noData').classList.remove('hidden');
+  document.getElementById('periodSummary').classList.add('hidden');
+  document.getElementById('exportBtn').classList.add('hidden');
+});
+
+// ---- Export ----
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const html = buildExportHTML();
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const sorted = [...loadedDays].sort((a, b) => a.date.localeCompare(b.date));
+  const fname = sorted.length === 1
+    ? `journal-${sorted[0].date}.html`
+    : `journal-${sorted[0].date}_${sorted[sorted.length - 1].date}.html`;
+  a.href = url;
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+function buildExportHTML() {
+  // Grab the full stylesheet
+  const style = document.querySelector('style').outerHTML;
+
+  // Expand all collapsed day bodies for the export
+  const container = document.querySelector('.container');
+  const clone = container.cloneNode(true);
+
+  // Remove interactive elements
+  const remove = clone.querySelectorAll('header, .drop-zone, #clearBtn, #exportBtn, #fileCount, .warnings, .toggle-hint, .period-toggle, #noData');
+  remove.forEach(el => el.remove());
+
+  // Ensure all day-body sections are visible
+  clone.querySelectorAll('.day-body').forEach(el => el.classList.remove('hidden'));
+
+  // Build date range for title
+  const sorted = [...loadedDays].sort((a, b) => a.date.localeCompare(b.date));
+  const rangeStr = sorted.length === 1
+    ? sorted[0].date
+    : `${sorted[0].date} to ${sorted[sorted.length - 1].date}`;
+
+  const titleBlock = `<div style="text-align:center;padding:1.5rem 0 1rem;border-bottom:1px solid var(--border);margin-bottom:1.5rem">
+    <h1 style="font-family:'DM Sans',sans-serif;font-size:1.1rem;font-weight:600;letter-spacing:0.04em;color:var(--text-dim);text-transform:uppercase">Interstitial <span style="color:var(--accent)">Journal</span></h1>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--text-muted);margin-top:0.4rem">${rangeStr} -- ${sorted.length} day${sorted.length !== 1 ? 's' : ''}</p>
+  </div>`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interstitial Journal Export - ${rangeStr}</title>
+${style}
+<style>
+  .day-body { display: block !important; }
+  .day-header { cursor: default; }
+</style>
+</head>
+<body>
+<div class="container">
+  ${titleBlock}
+  ${clone.innerHTML}
+</div>
+</body>
+</html>`;
+}
+
+// ---- Init: load persisted data on open ----
+(async function init() {
+  const stored = await loadAllFromStorage();
+  if (stored.length) {
+    loadedDays = stored;
+    updateFileCount();
+    renderAll(loadedDays);
+  }
+})();
+</script>
+</body>
+</html>
