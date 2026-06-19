@@ -1,0 +1,19 @@
+{
+  "names": {
+    "orrery": "401c4f86d86250d22e28c5f3ecc81a279d66430d93e087557ae199e20d04766d",
+    "lathe": "88ec3a0b5a1c5e5a684456bba9e4b8e16352dd6981b9665143640bb73dc38670"
+  },
+  "relays": {
+    "401c4f86d86250d22e28c5f3ecc81a279d66430d93e087557ae199e20d04766d": [
+      "wss://relay.damus.io",
+      "wss://nos.lol",
+      "wss://relay.primal.net"
+    ],
+    "88ec3a0b5a1c5e5a684456bba9e4b8e16352dd6981b9665143640bb73dc38670": [
+      "wss://relay.damus.io",
+      "wss://nos.lol",
+      "wss://relay.primal.net",
+      "wss://relay.0xchat.com"
+    ]
+  }
+}
