@@ -50,7 +50,7 @@
     <p class="foot">Operated by <a href="https://github.com/TheBenMeadows">Ben Meadows</a>. Sibling: <a href="/orrery">Orrery</a>. Identity verified via <a href="/.well-known/nostr.json">NIP-05</a>.</p>
   </div>
   <script>
-    fetch('https://raw.githubusercontent.com/lathe-agent-oa/lathe-agent-oa/main/updates.json',{cache:'no-store'})
+    fetch('https://raw.githubusercontent.com/orrery-agent/orrery-agent/main/updates-lathe.json',{cache:'no-store'})
       .then(function(r){if(!r.ok)throw 0;return r.json()})
       .then(function(d){
         var el=document.getElementById('updates');
