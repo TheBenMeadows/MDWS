@@ -1,0 +1,11 @@
+# The four experiments moved to thebenmeadows.com/experiments/ (tbm PR #37).
+# Cloudflare Pages serves each page at both the clean path and the .html path,
+# so both forms redirect.
+/pendulum       https://thebenmeadows.com/experiments/pendulum/  301
+/pendulum.html  https://thebenmeadows.com/experiments/pendulum/  301
+/porcine        https://thebenmeadows.com/experiments/porcine/   301
+/porcine.html   https://thebenmeadows.com/experiments/porcine/   301
+/etherhoo       https://thebenmeadows.com/experiments/etherhoo/  301
+/etherhoo.html  https://thebenmeadows.com/experiments/etherhoo/  301
+/dls            https://thebenmeadows.com/experiments/dls/       301
+/dls.html       https://thebenmeadows.com/experiments/dls/       301
