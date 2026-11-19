@@ -83,6 +83,7 @@
             color: #FFFFFF;
             font-family: 'Courier New', Courier, monospace;
             font-size: 16px;
+            /* css-touch-lint: allow - the only control on the page; its text caret shows focus */
             outline: none;
             flex-grow: 1;
             /* The cursor is a blinking border */
@@ -117,10 +118,15 @@
             margin-bottom: 8px;
             padding: 2px 5px; /* Add some padding for the selection highlight */
         }
-        #helpOutput a:hover, #helpOutput a.selected {
+        #helpOutput a.selected, #helpOutput a:focus-visible {
             background-color: #FFFFFF;
             color: #111111;
-            outline: none;
+        }
+        @media (hover: hover) {
+            #helpOutput a:hover {
+                background-color: #FFFFFF;
+                color: #111111;
+            }
         }
 
         #errorOutput {
