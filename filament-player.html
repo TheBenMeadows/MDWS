@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>filament Player</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000000; /* Match SVG background */
+        }
+        /* Ensures the object tag fills the iframe */
+        object {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <object type="image/svg+xml" data="https://mdws.me/filament.svg">
+        <img src="https://mdws.me/filament-preview.jpg" alt="filament Fallback" style="width:100%; height:auto;">
+    </object>
+</body>
+</html>
